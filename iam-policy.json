@@ -1,0 +1,28 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowPermissionsToAccessCodeConfig",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:CreateCodeSigningConfig",
+                "lambda:UpdateCodeSigningConfig",
+                "lambda:GetCodeSigningConfig"
+              ],
+            "Resource": "*" 
+          },
+        {
+            "Sid": "AllowReferencingCodeSigningConfigForCreateFunction",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:CreateFunction"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "lambda:CodeSigningConfigArn": "arn:aws:lambda:<AWS Region>:<AccountID>:code-signing-config:csc-<CodeSigningConfigID>"
+                }
+            }
+        }
+    ]
+}

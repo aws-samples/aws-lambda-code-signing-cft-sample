@@ -1,0 +1,71 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this
+# software and associated documentation files (the "Software"), to deal in the Software
+# without restriction, including without limitation the rights to use, copy, modify,
+# merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: A CloudFormation Template to deploy a sample lambda function with CodeSigning Configuration in place. This stackset should be deployed after stackset1.
+Parameters:
+  VPCSecurityGroup:
+    Type: String
+  VPCSubnet1:
+    Type: String
+  VPCSubnet2:
+    Type: String
+Resources:
+  SampleLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs12.x
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
+      Handler: index.handler
+      CodeSigningConfigArn: !ImportValue Lambda-Code-Signer-Config-ARN
+      Code:
+        ZipFile: |
+                  var aws = require('aws-sdk')
+                 
+                  exports.handler = function (event, context) {
+                      console.log ("Hello, Welcome to Sample Lambda Function")
+                      console.log("REQUEST RECEIVED:\n" + JSON.stringify(event))
+
+                  }
+      Description: Invoke a function during stack creation.
+      VpcConfig:
+        SecurityGroupIds:
+        - Ref: VPCSecurityGroup
+        SubnetIds:
+        - Ref: VPCSubnet1
+        - Ref: VPCSubnet2
+      ReservedConcurrentExecutions: 0
+      TracingConfig:
+        Mode: Active
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+          

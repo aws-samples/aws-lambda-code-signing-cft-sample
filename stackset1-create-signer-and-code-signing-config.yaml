@@ -1,0 +1,65 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this
+# software and associated documentation files (the "Software"), to deal in the Software
+# without restriction, including without limitation the rights to use, copy, modify,
+# merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: A CloudFormation Template to create a signer profile and create Code Signing Configuration for lambda
+
+Resources:
+  LambdaSignerProfile:
+    Type: AWS::Signer::SigningProfile
+    Properties: 
+      PlatformId: "AWSLambda-SHA384-ECDSA" #Platform ID used for Lambdas, there are multiple Platforms supported by AWS Signer
+      SignatureValidityPeriod: 
+        Type: MONTHS
+        Value: 12 # This value by default is 135 months 
+      Tags: 
+        -
+          Key: Profile_type
+          Value: Lambda
+
+  LambdaSignerConfig:
+    Type: AWS::Lambda::CodeSigningConfig
+    Properties: 
+      AllowedPublishers: 
+        SigningProfileVersionArns:
+          - Fn::GetAtt:
+                - LambdaSignerProfile
+                - Arn
+      CodeSigningPolicies: 
+        UntrustedArtifactOnDeployment: Warn #Can be Warn or Enforce
+      Description: "Code Signing for Sample Lambda Function"
+
+Outputs:
+  LambdaSignerARN:
+    Description: ARN of the Lambda Signer Profile Created
+    Value: !GetAtt 
+      - LambdaSignerProfile
+      - Arn
+    Export:
+      Name: Lambda-Signer-Profile-ARN
+  LambdaCodeSignerConfigId:
+    Description: ID of the Lambda Signer Configuration Created
+    Value: !GetAtt 
+      - LambdaSignerConfig
+      - CodeSigningConfigId
+    Export:
+      Name: Lambda-Code-Signer-Config-ID
+  LambdaCodeSignerConfigARN:
+    Description: ARN of the Lambda Signer Configuration Created
+    Value: !GetAtt 
+      - LambdaSignerConfig
+      - CodeSigningConfigArn
+    Export:
+      Name: Lambda-Code-Signer-Config-ARN
